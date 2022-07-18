@@ -1,3 +1,2 @@
 # Enter one address per line in format http://<ip>:3000
 http://129.146.9.111:3000
-http://65.108.201.140:3000

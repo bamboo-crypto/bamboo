@@ -57,6 +57,7 @@ class HostManager {
         set<string> whitelist;
 
         vector<std::thread> syncThread;
+        vector<std::thread> headerStatsThread;
         friend void peer_sync(HostManager& hm);
 };
 

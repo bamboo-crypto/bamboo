@@ -6,6 +6,7 @@
 #include "header_chain.hpp"
 #include "../external/http.hpp"
 #include <iostream>
+#include <sstream>
 #include <thread>
 #include <mutex>
 #include <future>
@@ -67,6 +68,24 @@ void peer_sync(HostManager& hm) {
             } catch (...) { }
         }
         std::this_thread::sleep_for(std::chrono::minutes(5));
+    }
+}
+
+/*
+    This thread updates the current display of sync'd headers
+*/
+
+void header_stats(HostManager& hm) {
+    while(true) {
+        Logger::logStatus("================ Header Sync Status ==============");
+        map<string, uint64_t> stats = hm.getHeaderChainStats();
+        for(auto item : stats) {
+            stringstream ss;
+            ss<<"Host: " <<item.first<<", blocks: "<<item.second;
+            Logger::logStatus(ss.str());
+        }
+        Logger::logStatus("===================================================");
+        std::this_thread::sleep_for(std::chrono::seconds(30));
     }
 }
 
@@ -136,6 +155,9 @@ HostManager::HostManager(json config) {
     } else {
         this->refreshHostList();
     }
+
+    // start thread to print header chain stats
+    this->headerStatsThread.push_back(std::thread(header_stats, ref(*this)));
     
 }
 
@@ -434,6 +456,7 @@ void HostManager::refreshHostList() {
 
 void HostManager::syncHeadersWithPeers() {
     // free existing peers
+    Logger::logStatus("Starting header chain sync. This may take up to 15 minutes.");
     this->lock.lock();
     for(auto peer : this->currPeers) {
         delete peer;
